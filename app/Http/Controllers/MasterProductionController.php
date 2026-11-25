@@ -38,9 +38,14 @@ class MasterProductionController extends Controller
             ['machine_id' => $machine->id],
             [
                 'part_number' => $request->input('partNumber'),
+                'customer' => $request->input('customer'),
+                'size_part' => $request->input('sizePart'),
                 'rpm' => $request->input('rpm'),
-                'pcs_per_revolution' => $request->input('pcsPerRevolution'),
+                'pcs_per_revolution' => $request->input('pcsPerRevolution', $request->input('pcsPerRev', 1)),
                 'notes' => $request->input('notes'),
+                'pic_shift1' => $request->input('picShift1'),
+                'pic_shift2' => $request->input('picShift2'),
+                'part_options' => $request->input('partOptions', []),
             ]
         );
 

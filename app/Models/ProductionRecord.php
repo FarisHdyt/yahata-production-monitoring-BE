@@ -10,13 +10,17 @@ class ProductionRecord extends Model
 {
     protected $fillable = [
         'date', 'shift', 'machine_id', 'part_number',
-        'start_time', 'end_time', 'output', 'pic', 'notes',
+        'start_time', 'end_time', 'counter_start', 'counter_end', 'rpm',
+        'output', 'pic', 'notes',
     ];
 
     protected $casts = [
         'date' => 'date',
         'shift' => 'integer',
         'output' => 'integer',
+        'counter_start' => 'integer',
+        'counter_end' => 'integer',
+        'rpm' => 'float',
     ];
 
     public function machine(): BelongsTo

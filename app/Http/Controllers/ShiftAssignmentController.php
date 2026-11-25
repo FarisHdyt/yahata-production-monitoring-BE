@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ParsesFilters;
+use App\Http\Requests\BulkShiftAssignmentRequest;
 use App\Http\Requests\ShiftAssignmentRequest;
 use App\Http\Resources\ShiftAssignmentResource;
 use App\Models\Machine;
@@ -70,6 +71,63 @@ class ShiftAssignmentController extends Controller
         $assignment->delete();
 
         return response()->noContent();
+    }
+
+    public function bulkUpsert(BulkShiftAssignmentRequest $request)
+    {
+        $date = $request->input('date');
+        $shift = (int) $request->input('shift');
+        $items = collect($request->input('assignments', []));
+        $machineIds = Machine::whereIn('name', $items->pluck('machine')->filter()->unique()->values())->pluck('id', 'name');
+
+        $saved = [];
+        foreach ($items as $item) {
+            $machineName = $item['machine'] ?? null;
+            $machineId = $machineName ? ($machineIds[$machineName] ?? null) : null;
+            if (! $machineId) {
+                continue;
+            }
+
+            $pic = trim((string) ($item['pic'] ?? ''));
+            $notes = isset($item['notes']) ? (string) $item['notes'] : null;
+
+            if ($pic === '') {
+                ShiftAssignment::whereDate('date', $date)
+                    ->where('shift', $shift)
+                    ->where('machine_id', $machineId)
+                    ->delete();
+                continue;
+            }
+
+            $assignment = ShiftAssignment::updateOrCreate(
+                [
+                    'date' => $date,
+                    'shift' => $shift,
+                    'machine_id' => $machineId,
+                ],
+                [
+                    'pic' => $pic,
+                    'notes' => $notes,
+                ]
+            );
+
+            $saved[] = $assignment->load('machine');
+        }
+
+        $assignments = ShiftAssignment::with('machine')
+            ->whereDate('date', $date)
+            ->where('shift', $shift)
+            ->get()
+            ->sortBy('machine.name')
+            ->values();
+
+        return ShiftAssignmentResource::collection($assignments)->additional([
+            'meta' => [
+                'savedCount' => count($saved),
+                'date' => $date,
+                'shift' => $shift,
+            ],
+        ]);
     }
 
     private function payload(ShiftAssignmentRequest $request): array

@@ -99,7 +99,7 @@ class DashboardService
             ])
             ->sortByDesc('minutes')->values();
 
-        $visibleRecords = $records->only($visibleIds->all())->collapse();
+        $visibleRecords = $visibleIds->flatMap(fn ($id) => $records->get($id, collect()));
 
         return [
             'date' => $date,

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminDataController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DowntimeEventController;
@@ -45,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
         ->only(['index', 'show', 'store', 'update']);
 
     // Shift & PIC
+    Route::post('shift-assignments/bulk', [ShiftAssignmentController::class, 'bulkUpsert']);
     Route::apiResource('shift-assignments', ShiftAssignmentController::class)
         ->parameters(['shift-assignments' => 'assignment'])
         ->only(['index', 'show', 'store', 'update']);
@@ -65,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('production-records/{record}', [ProductionRecordController::class, 'destroy']);
         Route::delete('downtime-events/{event}', [DowntimeEventController::class, 'destroy']);
         Route::delete('shift-assignments/{assignment}', [ShiftAssignmentController::class, 'destroy']);
+
+        Route::post('admin/reset-operational-data', [AdminDataController::class, 'resetOperationalData']);
 
         // harus sebelum apiResource('users') supaya tidak tertabrak users/{user}
         Route::put('users/{user}/password', [UserController::class, 'resetPassword']);
