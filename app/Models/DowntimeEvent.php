@@ -64,9 +64,12 @@ class DowntimeEvent extends Model
     public function scopeFilter(Builder $query, array $f): Builder
     {
         return $query
-            ->when($f['date'] ?? null, fn ($q, $v) => $q->whereDate('start_at', $v))
-            ->when($f['startDate'] ?? null, fn ($q, $v) => $q->whereDate('start_at', '>=', $v))
-            ->when($f['endDate'] ?? null, fn ($q, $v) => $q->whereDate('start_at', '<=', $v))
+            // Rentang waktu (bukan whereDate) supaya index start_at bisa dipakai.
+            ->when($f['date'] ?? null, fn ($q, $v) => $q
+                ->where('start_at', '>=', $v . ' 00:00:00')
+                ->where('start_at', '<=', $v . ' 23:59:59'))
+            ->when($f['startDate'] ?? null, fn ($q, $v) => $q->where('start_at', '>=', $v . ' 00:00:00'))
+            ->when($f['endDate'] ?? null, fn ($q, $v) => $q->where('start_at', '<=', $v . ' 23:59:59'))
             ->when($f['shift'] ?? null, fn ($q, $v) => $q->where('shift', $v))
             ->when($f['machine'] ?? null, fn ($q, $v) => $q->whereHas('machine', fn ($m) => $m->where('name', $v)))
             ->when(($f['status'] ?? null) === 'active', fn ($q) => $q->whereNull('end_at'))

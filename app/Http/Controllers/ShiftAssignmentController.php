@@ -19,12 +19,15 @@ class ShiftAssignmentController extends Controller
     {
         $f = $this->filters($request);
 
+        // Urutan dilakukan di SQL (join machines). Sebelumnya sortBy() di Collection ~4 detik untuk ~9 ribu baris.
         $assignments = ShiftAssignment::with('machine')
+            ->select('shift_assignments.*')
+            ->join('machines', 'machines.id', '=', 'shift_assignments.machine_id')
             ->filter($f)
-            ->orderByDesc('date')
-            ->get()
-            ->sortBy([['date', 'desc'], ['machine.name', 'asc']])
-            ->values();
+            ->orderByDesc('shift_assignments.date')
+            ->orderBy('machines.name')
+            ->orderBy('shift_assignments.shift')
+            ->get();
 
         // Kartu statistik di frontend = penugasan pada tanggal tertentu (default hari ini), lintas shift
         $statsDate = $f['date'] ?? now()->toDateString();

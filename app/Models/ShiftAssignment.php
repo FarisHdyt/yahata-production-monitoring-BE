@@ -24,6 +24,8 @@ class ShiftAssignment extends Model
     {
         return $query
             ->when($f['date'] ?? null, fn ($q, $v) => $q->whereDate('date', $v))
+            ->when($f['startDate'] ?? null, fn ($q, $v) => $q->whereDate('date', '>=', $v))
+            ->when($f['endDate'] ?? null, fn ($q, $v) => $q->whereDate('date', '<=', $v))
             ->when($f['shift'] ?? null, fn ($q, $v) => $q->where('shift', $v))
             ->when($f['machine'] ?? null, fn ($q, $v) => $q->whereHas('machine', fn ($m) => $m->where('name', $v)));
     }
