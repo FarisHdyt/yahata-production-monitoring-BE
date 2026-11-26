@@ -65,6 +65,18 @@ class AuthTest extends TestCase
         $this->getJson('/api/auth/me')->assertStatus(401);
     }
 
+    public function test_me_returns_current_authenticated_user(): void
+    {
+        $user = User::factory()->create(['username' => 'budi', 'name' => 'Budi']);
+
+        $this->actingAs($user, 'sanctum')
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('data.username', 'budi')
+            ->assertJsonPath('data.name', 'Budi')
+            ->assertJsonPath('data.role', 'operator');
+    }
+
     public function test_token_works_and_logout_revokes_it(): void
     {
         User::factory()->create(['username' => 'budi']);
