@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 // ---------- Auth ----------
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('sso', [AuthController::class, 'sso'])->middleware('throttle:10,1');   // <-- BARIS BARU
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('me', [AuthController::class, 'me']);

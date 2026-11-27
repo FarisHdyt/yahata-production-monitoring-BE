@@ -6,6 +6,7 @@ use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\SsoTicket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -48,7 +49,31 @@ class AuthController extends Controller
 
         RateLimiter::clear($key);
 
-        $deviceName = $request->input('deviceName', 'web');
+        return $this->issueToken($user, $request->input('deviceName', 'web'));
+    }
+
+    /**
+     * Login lewat tiket dari Superapps YFI (SSO).
+     * Superapps hanya menentukan BOLEH masuk; role tetap dari tabel users kita.
+     * Tidak pernah membuat akun otomatis: NIK harus sudah terdaftar dan aktif.
+     */
+    public function sso(Request $request): JsonResponse
+    {
+        $tiket = $request->input('tiket');
+        $tiket = is_string($tiket) && strlen($tiket) <= 512 ? $tiket : '';
+
+        $nik = SsoTicket::nik($tiket);
+        abort_unless($nik, Response::HTTP_UNPROCESSABLE_ENTITY, 'Tiket masuk tidak sah, kedaluwarsa, atau sudah dipakai. Buka lagi dari Superapps.');
+
+        $user = User::where('nik', $nik)->where('is_active', true)->first();
+        abort_unless($user, Response::HTTP_UNPROCESSABLE_ENTITY, "NIK {$nik} belum terdaftar atau akunnya nonaktif di sistem ini. Hubungi admin.");
+
+        return $this->issueToken($user, 'web');
+    }
+
+    /** Token Sanctum + payload yang sama persis untuk login biasa dan SSO. */
+    private function issueToken(User $user, string $deviceName): JsonResponse
+    {
         $user->tokens()->where('name', $deviceName)->delete(); // satu token aktif per perangkat
 
         $expiresAt = now()->addHours(self::TOKEN_HOURS);

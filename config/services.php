@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // SSO Superapps YFI: kunci rahasia untuk memeriksa tiket (minimal 32 karakter).
+    'sso' => [
+        'secret' => env('SSO_SECRET'),
+    ],
+
 ];
